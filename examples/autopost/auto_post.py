@@ -3,46 +3,68 @@ import sys
 import os
 import glob
 
-sys.path.append(os.path.join(sys.path[0], '../../'))
+import MySQLdb
+
+import praw
+import urllib
+
+
+# Open database connection
+db = MySQLdb.connect("localhost","root","tupac21","myDB" )
+
+# prepare a cursor object using cursor() method
+cursor = db.cursor()
+
+# execute SQL query using execute() method.
+sql = "INSERT INTO urls(url) VALUES (%s)" % "url"
+#sql = "SELECT * FROM urls"
+cursor.execute(sql);
+
+# Fetch a single row using fetchone() method.
+data = cursor.fetchall()
+for d in data:
+    print d
+#print "Database version : %s " % data
+
+# disconnect from server
+db.close()
+
+'''
 from instabot import Bot
 
-posted_pic_list = []
-try:
-    with open('pics.txt', 'r') as f:
-        posted_pic_list = f.read().splitlines()
-except Exception:
-    posted_pic_list = []
-
-timeout = 24 * 60 * 60  # pics will be posted every 24 hours
+reddit = praw.Reddit('instabot')
+subreddit = reddit.subreddit("memes")
 
 bot = Bot()
 bot.login()
 
-while True:
-    pics = glob.glob("./pics/*.jpg")
-    pics = sorted(pics)
+global post_to_upload
+for submission in subreddit.hot(limit=20):
+    
     try:
-        for pic in pics:
-            if pic in posted_pic_list:
-                continue
+        if not submission.over_18 and submission.score > post_to_upload.score: 
+            post_to_upload = submission
+        print "upload test"
+    except NameError:
+        print "NAME ERROR"
+        post_to_upload = submission
+    print("Title: ", submission.title)
+    print("Score: ", submission.score)
+    print("URL: ", submission.url)
+    print("NSFW: ", submission.over_18)
+    print("---------------------------------\n")
+print("FINAL: ", post_to_upload.title)
+timeout = 20#24 * 60 * 60  # pics will be posted every 24 hours 
+img = urllib.urlretrieve(post_to_upload.url, "img.jpg")
+print img
 
-            caption = pic[:-4].split(" ")
-            caption = " ".join(caption[1:])
-
-            print("upload: " + caption)
-            bot.uploadPhoto(pic, caption=caption)
-            if bot.LastResponse.status_code != 200:
-                print(bot.LastResponse)
-                # snd msg
-                break
-
-            if pic not in posted_pic_list:
-                posted_pic_list.append(pic)
-                with open('pics.txt', 'a') as f:
-                    f.write(pic + "\n")
-
-            time.sleep(timeout)
-
+while True:
+    pics = glob.glob("./img.jpg")
+    print "len " ,len(pics)
+    try:
+        if img != None:
+            bot.uploadPhoto(pics[0], caption="test")
     except Exception as e:
         print(str(e))
-    time.sleep(60)
+    time.sleep(timeout)
+'''
